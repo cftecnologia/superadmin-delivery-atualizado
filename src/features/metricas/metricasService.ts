@@ -146,9 +146,17 @@ export interface MetricasGerais {
   gerado_em: string;
 }
 
+export interface MetricasFilters {
+  dataInicio?: string;
+  dataFim?: string;
+  lojaId?: string;
+}
+
 export const metricasService = {
-  async getMetricasGerais(): Promise<MetricasGerais> {
-    const { data } = await api.get<{ success: boolean; data: MetricasGerais }>("/metricas");
+  async getMetricasGerais(filters: MetricasFilters = {}): Promise<any> {
+    const { lojaId, ...params } = filters;
+    const endpoint = lojaId ? `/metricas/lojas/${lojaId}` : "/metricas";
+    const { data } = await api.get<{ success: boolean; data: any }>(endpoint, { params });
     return data.data;
   },
 };

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Outlet, Navigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { authService } from "../../features/auth/authService";
-import { LayoutDashboard, Store, Users, LogOut, Settings, Package, Tag, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Store, Users, LogOut, Settings, Package, Tag, ClipboardList, WalletCards } from "lucide-react";
 import { Button } from "../ui/button";
 
 export default function AdminLayout() {
@@ -19,16 +19,25 @@ export default function AdminLayout() {
     return <Navigate to="/login" replace />;
   }
 
+  const canView = (slug: string) => {
+    if (user?.permissions?.includes("*")) return true;
+    if (slug === "users") return false;
+    return user?.permissions?.includes(slug);
+  };
+
   const menuItems = [
-    { name: "Dashboard", path: "/", icon: LayoutDashboard },
-    { name: "Lojas", path: "/stores", icon: Store },
-    { name: "Categorias", path: "/products/categories", icon: Tag },
-    { name: "Usuários", path: "/users", icon: Users },
-    { name: "Produtos", path: "/products", icon: Package },
-    { name: "Regras de Split", path: "/settings/split-rules", icon: Settings },
-    { name: "Teste Pagamento", path: "/settings/mercadopago-test", icon: Settings },
-    { name: "Auditoria", path: "/audit-logs", icon: ClipboardList },
+    { name: "Dashboard", path: "/", icon: LayoutDashboard, slug: "dashboard" },
+    { name: "Lojas", path: "/stores", icon: Store, slug: "stores" },
+    { name: "Categorias", path: "/products/categories", icon: Tag, slug: "categories" },
+    { name: "Produtos", path: "/products", icon: Package, slug: "products" },
+    { name: "Caixa", path: "/caixa", icon: WalletCards, slug: "caixa" },
+    { name: "Acessos", path: "/access-users", icon: Users, slug: "users" },
+    { name: "Regras de Split", path: "/settings/split-rules", icon: Settings, slug: "split_rules" },
+    { name: "Teste Pagamento", path: "/settings/mercadopago-test", icon: Settings, slug: "mercadopago_test" },
+    { name: "Auditoria", path: "/audit-logs", icon: ClipboardList, slug: "audit_logs" },
   ];
+
+  const visibleMenuItems = menuItems.filter((item) => canView(item.slug));
 
   return (
     <div className="flex h-screen bg-slate-100 dark:bg-slate-900">
@@ -44,7 +53,7 @@ export default function AdminLayout() {
         </div>
         
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const isActive = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
             return (
               <Link

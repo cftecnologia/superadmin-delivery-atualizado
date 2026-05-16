@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { metricasService } from "../features/metricas/metricasService";
+import { metricasService, type MetricasFilters } from "../features/metricas/metricasService";
 
-export function useMetricas() {
+export function useMetricas(filters: MetricasFilters = {}) {
   return useQuery({
-    queryKey: ["metricas-gerais"],
-    queryFn: () => metricasService.getMetricasGerais(),
+    queryKey: ["metricas-gerais", filters],
+    queryFn: () => metricasService.getMetricasGerais(filters),
     staleTime: 5 * 60 * 1000, // 5 minutos
     refetchInterval: 5 * 60 * 1000,
   });
