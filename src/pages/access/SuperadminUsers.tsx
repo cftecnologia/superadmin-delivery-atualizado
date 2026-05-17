@@ -203,7 +203,7 @@ export default function SuperadminUsers() {
                       <Button variant="ghost" size="icon" title="Editar" onClick={() => setEditing(user)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" title="Excluir" onClick={() => deleteMutation.mutate(String(user.id))}>
+                    <Button variant="ghost" size="icon" title="Excluir" onClick={() => deleteMutation.mutate(user.id)}>
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </TableCell>

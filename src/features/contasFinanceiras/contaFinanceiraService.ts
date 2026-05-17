@@ -27,9 +27,10 @@ export type ContaFinanceiraInput = Omit<ContaFinanceira, 'id' | 'criado_em' | 'a
 export const contaFinanceiraService = {
   getByLojaId: async (lojaId: string) => {
     const response = await api.get('/contas_financeiras', {
-      params: { loja_id: lojaId }
+      params: { loja_id: lojaId, per_page: 100 }
     });
-    return response.data;
+    const payload = response.data?.data ?? response.data;
+    return Array.isArray(payload?.data) ? payload.data : payload;
   },
 
   create: async (data: ContaFinanceiraInput) => {

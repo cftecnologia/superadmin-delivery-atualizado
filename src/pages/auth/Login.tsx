@@ -41,7 +41,12 @@ export default function Login() {
         setError("Erro ao autenticar. Tente novamente.");
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || "E-mail ou senha incorretos.");
+      const apiError = err.response?.data?.error;
+      setError(
+        typeof apiError === "string"
+          ? apiError
+          : apiError?.message || err.response?.data?.message || "E-mail ou senha incorretos."
+      );
     } finally {
       setLoading(false);
     }

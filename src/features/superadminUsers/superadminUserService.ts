@@ -12,7 +12,7 @@ export const SUPERADMIN_MODULES = [
 ] as const;
 
 export interface SuperadminUser {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: "superadmin" | "vendedor";
