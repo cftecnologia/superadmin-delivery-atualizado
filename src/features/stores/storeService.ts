@@ -14,6 +14,8 @@ export interface Store {
   horario_fechamento?: string | null;
   valor_minimo_pedido: number;
   taxa_entrega_padrao: number;
+  latitude?: number | null;
+  longitude?: number | null;
   criado_em?: string;
   atualizado_em?: string;
 }

@@ -25,6 +25,8 @@ const storeSchema = z.object({
   horario_fechamento: z.string().optional().or(z.literal("")),
   valor_minimo_pedido: z.number().min(0, "Valor mínimo não pode ser negativo"),
   taxa_entrega_padrao: z.number().min(0, "Taxa não pode ser negativa"),
+  latitude: z.number().min(-90, "Latitude inválida").max(90, "Latitude inválida").nullable().optional(),
+  longitude: z.number().min(-180, "Longitude inválida").max(180, "Longitude inválida").nullable().optional(),
 });
 
 type StoreFormValues = z.infer<typeof storeSchema>;
@@ -42,6 +44,8 @@ export default function StoreForm() {
       status: "ativa",
       valor_minimo_pedido: 0,
       taxa_entrega_padrao: 0,
+      latitude: null,
+      longitude: null,
     }
   });
 
@@ -66,6 +70,8 @@ export default function StoreForm() {
         horario_fechamento: store.horario_fechamento || "",
         valor_minimo_pedido: Number(store.valor_minimo_pedido) || 0,
         taxa_entrega_padrao: Number(store.taxa_entrega_padrao) || 0,
+        latitude: store.latitude === null || store.latitude === undefined ? null : Number(store.latitude),
+        longitude: store.longitude === null || store.longitude === undefined ? null : Number(store.longitude),
       });
     }
   }, [store, reset, isEditing]);
@@ -211,6 +217,19 @@ export default function StoreForm() {
                 <Label htmlFor="taxa_entrega_padrao">Taxa de Entrega Padrão (R$)</Label>
                 <Input id="taxa_entrega_padrao" type="number" step="0.01" min="0" placeholder="0.00" {...register("taxa_entrega_padrao", { valueAsNumber: true })} className={errors.taxa_entrega_padrao ? "border-red-500" : ""} />
                 {errors.taxa_entrega_padrao && <span className="text-xs text-red-500">{errors.taxa_entrega_padrao.message}</span>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="latitude">Latitude da Loja</Label>
+                <Input id="latitude" type="number" step="0.0000001" min="-90" max="90" placeholder="-8.047562" {...register("latitude", { setValueAs: (value) => value === "" ? null : Number(value) })} className={errors.latitude ? "border-red-500" : ""} />
+                {errors.latitude && <span className="text-xs text-red-500">{errors.latitude.message}</span>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="longitude">Longitude da Loja</Label>
+                <Input id="longitude" type="number" step="0.0000001" min="-180" max="180" placeholder="-34.877000" {...register("longitude", { setValueAs: (value) => value === "" ? null : Number(value) })} className={errors.longitude ? "border-red-500" : ""} />
+                {errors.longitude && <span className="text-xs text-red-500">{errors.longitude.message}</span>}
+                <p className="text-xs text-muted-foreground">Usada como origem das rotas de entrega.</p>
               </div>
             </div>
           </CardContent>
