@@ -10,6 +10,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
 import { Package } from "lucide-react";
+import { MfaLoginStep, type MfaSession } from "../../features/auth/MfaLoginStep";
 
 const loginSchema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -17,12 +18,14 @@ const loginSchema = z.object({
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
+type ApiError = { response?: { data?: { error?: string | { message?: string }; message?: string } } };
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mfaSession, setMfaSession] = useState<MfaSession | null>(null);
 
   const { register, handleSubmit, formState: { errors } } = useRHForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -35,17 +38,21 @@ export default function Login() {
       const response = await authService.login(data.email, data.password);
 
       if (response.access_token) {
-        login(response.access_token, response.user);
+        login(response.access_token, response.user, response.refresh_token);
+        if (response.mfa_required && response.aal !== "aal2") {
+          setMfaSession(response);
+          return;
+        }
         navigate("/");
       } else {
         setError("Erro ao autenticar. Tente novamente.");
       }
-    } catch (err: any) {
-      const apiError = err.response?.data?.error;
+    } catch (err: unknown) {
+      const apiError = (err as ApiError).response?.data?.error;
       setError(
         typeof apiError === "string"
           ? apiError
-          : apiError?.message || err.response?.data?.message || "E-mail ou senha incorretos."
+          : apiError?.message || (err as ApiError).response?.data?.message || "E-mail ou senha incorretos."
       );
     } finally {
       setLoading(false);
@@ -67,6 +74,19 @@ export default function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {mfaSession ? (
+            <MfaLoginStep
+              session={mfaSession}
+              onCancel={() => {
+                logout();
+                setMfaSession(null);
+              }}
+              onComplete={(session) => {
+                login(session.access_token, session.user, session.refresh_token);
+                navigate("/");
+              }}
+            />
+          ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {error && (
               <div className="p-3 text-sm text-red-500 bg-red-100/50 rounded-md text-center">
@@ -101,6 +121,7 @@ export default function Login() {
               {loading ? "Entrando..." : "Entrar no painel"}
             </Button>
           </form>
+          )}
         </CardContent>
       </Card>
     </div>

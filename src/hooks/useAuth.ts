@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { getToken, removeToken, setToken } from "../lib/auth";
+import { getToken, removeToken, setRefreshToken, setToken } from "../lib/auth";
 
 interface User {
   id: string;
@@ -13,7 +13,7 @@ interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  login: (token: string, user: User) => void;
+  login: (token: string, user: User, refreshToken?: string) => void;
   logout: () => void;
   setUser: (user: User) => void;
 }
@@ -21,8 +21,9 @@ interface AuthState {
 export const useAuth = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: !!getToken(),
-  login: (token, user) => {
+  login: (token, user, refreshToken) => {
     setToken(token);
+    setRefreshToken(refreshToken);
     set({ user, isAuthenticated: true });
   },
   logout: () => {

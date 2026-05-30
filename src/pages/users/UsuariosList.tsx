@@ -7,7 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Badge } from "../../components/ui/badge";
-import { Plus, Search, Edit, Eye, Trash2, Shield } from "lucide-react";
+import { Plus, Search, Edit, Eye, Trash2, Shield, KeyRound } from "lucide-react";
+import { authService } from "../../features/auth/authService";
 
 export default function UsuariosList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,6 +29,10 @@ export default function UsuariosList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["usuarios"] });
     },
+  });
+
+  const resetMfaMutation = useMutation({
+    mutationFn: (id: string) => authService.resetMfa(id, "tenant"),
   });
 
   const getStatusBadge = (status: string) => {
@@ -162,6 +167,15 @@ export default function UsuariosList() {
                           <Edit className="h-4 w-4" />
                         </Button>
                       </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Redefinir MFA"
+                        onClick={() => resetMfaMutation.mutate(usuario.id)}
+                        disabled={resetMfaMutation.isPending}
+                      >
+                        <KeyRound className="h-4 w-4 text-amber-600" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

@@ -13,6 +13,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
+import { authService } from "../../features/auth/authService";
 
 const defaultForm: SuperadminUserPayload & { password: string } = {
   name: "",
@@ -73,6 +74,15 @@ export default function SuperadminUsers() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => superadminUserService.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["superadmin-users"] }),
+  });
+
+  const resetMfaMutation = useMutation({
+    mutationFn: (id: string) => authService.resetMfa(id, "superadmin"),
+    onSuccess: () => setError(""),
+    onError: (err: unknown) => {
+      const message = (err as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message;
+      setError(message || "Erro ao redefinir MFA.");
+    },
   });
 
   const submit = (event: FormEvent) => {
@@ -202,6 +212,9 @@ export default function SuperadminUsers() {
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" title="Editar" onClick={() => setEditing(user)}>
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Redefinir MFA" onClick={() => resetMfaMutation.mutate(user.id)}>
+                        <KeyRound className="h-4 w-4 text-amber-600" />
                       </Button>
                     <Button variant="ghost" size="icon" title="Excluir" onClick={() => deleteMutation.mutate(user.id)}>
                         <Trash2 className="h-4 w-4 text-red-500" />
