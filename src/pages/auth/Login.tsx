@@ -8,9 +8,18 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
 import { Package } from "lucide-react";
-import { MfaLoginStep, type MfaSession } from "../../features/auth/MfaLoginStep";
+import {
+  MfaLoginStep,
+  type MfaSession,
+} from "../../features/auth/MfaLoginStep";
 
 const loginSchema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -18,7 +27,11 @@ const loginSchema = z.object({
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
-type ApiError = { response?: { data?: { error?: string | { message?: string }; message?: string } } };
+type ApiError = {
+  response?: {
+    data?: { error?: string | { message?: string }; message?: string };
+  };
+};
 
 export default function Login() {
   const { login, logout } = useAuth();
@@ -27,7 +40,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [mfaSession, setMfaSession] = useState<MfaSession | null>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useRHForm<LoginForm>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useRHForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
 
@@ -52,7 +69,9 @@ export default function Login() {
       setError(
         typeof apiError === "string"
           ? apiError
-          : apiError?.message || (err as ApiError).response?.data?.message || "E-mail ou senha incorretos."
+          : apiError?.message ||
+              (err as ApiError).response?.data?.message ||
+              "E-mail ou senha incorretos.",
       );
     } finally {
       setLoading(false);
@@ -64,11 +83,15 @@ export default function Login() {
       <Card className="w-full max-w-md shadow-lg border-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm">
         <CardHeader className="space-y-2 text-center pb-8">
           <div className="flex justify-center mb-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <Package className="w-8 h-8 text-primary" />
-            </div>
+            <img
+              src="/image.png"
+              alt="Marca"
+              className="h-16 w-auto object-contain"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Bem-vindo de volta</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">
+            Bem-vindo de volta
+          </CardTitle>
           <CardDescription>
             Entre com suas credenciais de Superadmin
           </CardDescription>
@@ -82,45 +105,57 @@ export default function Login() {
                 setMfaSession(null);
               }}
               onComplete={(session) => {
-                login(session.access_token, session.user, session.refresh_token);
+                login(
+                  session.access_token,
+                  session.user,
+                  session.refresh_token,
+                );
                 navigate("/");
               }}
             />
           ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm text-red-500 bg-red-100/50 rounded-md text-center">
-                {error}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {error && (
+                <div className="p-3 text-sm text-red-500 bg-red-100/50 rounded-md text-center">
+                  {error}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="admin@exemplo.com"
+                  {...register("email")}
+                  className={errors.email ? "border-red-500" : ""}
+                />
+                {errors.email && (
+                  <span className="text-xs text-red-500">
+                    {errors.email.message}
+                  </span>
+                )}
               </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@exemplo.com"
-                {...register("email")}
-                className={errors.email ? "border-red-500" : ""}
-              />
-              {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Senha</Label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Senha</Label>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  {...register("password")}
+                  className={errors.password ? "border-red-500" : ""}
+                />
+                {errors.password && (
+                  <span className="text-xs text-red-500">
+                    {errors.password.message}
+                  </span>
+                )}
               </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...register("password")}
-                className={errors.password ? "border-red-500" : ""}
-              />
-              {errors.password && <span className="text-xs text-red-500">{errors.password.message}</span>}
-            </div>
-            <Button type="submit" className="w-full mt-6" disabled={loading}>
-              {loading ? "Entrando..." : "Entrar no painel"}
-            </Button>
-          </form>
+              <Button type="submit" className="w-full mt-6" disabled={loading}>
+                {loading ? "Entrando..." : "Entrar no painel"}
+              </Button>
+            </form>
           )}
         </CardContent>
       </Card>
