@@ -10,6 +10,7 @@ export const SUPERADMIN_MODULES = [
   { slug: "audit_logs", label: "Auditoria" },
   { slug: "caixa", label: "Caixa" },
   { slug: "legal_documents", label: "Documentos legais" },
+  { slug: "observability", label: "Saúde do Sistema" },
 ] as const;
 
 export interface SuperadminUser {
