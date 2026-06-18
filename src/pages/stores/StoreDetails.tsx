@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { storeService } from "../../features/stores/storeService";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
-import { ArrowLeft, Edit, Store, Mail, Phone, Hash, Clock, DollarSign, Truck, FileText, Image, Users, WalletCards } from "lucide-react";
+import { ArrowLeft, Edit, Store, Mail, Phone, Hash, Clock, DollarSign, Truck, FileText, Image, Users, UtensilsCrossed, WalletCards } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
 import ContasFinanceirasLoja from "./components/ContasFinanceirasLoja";
 import AdminsLoja from "./components/AdminsLoja";
@@ -123,6 +123,20 @@ export default function StoreDetails() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Razão Social</p>
                 <p>{store.razao_social || "Não informado"}</p>
+              </div>
+
+              <div className="rounded-md border bg-muted/20 p-3">
+                <p className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+                  <UtensilsCrossed className="h-3 w-3" /> Tipo e cardápio
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Badge variant="outline" className="capitalize">
+                    {store.tipo_estabelecimento || "mercado"}
+                  </Badge>
+                  <Badge variant={store.cardapio_configuravel_ativo ? "success" : "secondary"}>
+                    Cardápio configurável {store.cardapio_configuravel_ativo ? "habilitado" : "desabilitado"}
+                  </Badge>
+                </div>
               </div>
 
               {store.descricao && (

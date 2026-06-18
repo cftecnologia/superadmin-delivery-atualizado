@@ -18,6 +18,8 @@ export interface Store {
   longitude?: number | null;
   cor_primaria?: string | null;
   cor_secundaria?: string | null;
+  tipo_estabelecimento: "mercado" | "lanchonete" | "restaurante" | "hibrido" | "outro";
+  cardapio_configuravel_ativo: boolean;
   criado_em?: string;
   atualizado_em?: string;
 }
@@ -30,35 +32,79 @@ export interface StoreColorPayload {
   cor_secundaria: string;
 }
 
+const ESTABLISHMENT_TYPES = ["mercado", "lanchonete", "restaurante", "hibrido", "outro"] as const;
+
+function unwrapApiData<T = any>(responseData: any): T {
+  return responseData?.data ?? responseData;
+}
+
+function parseBoolean(value: unknown, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "sim", "yes", "habilitado", "ativo"].includes(normalized)) return true;
+    if (["false", "0", "nao", "não", "no", "desabilitado", "inativo"].includes(normalized)) return false;
+  }
+  return fallback;
+}
+
+function normalizeStore(rawStore: any): Store {
+  const rawType = rawStore?.tipo_estabelecimento ?? rawStore?.tipoEstabelecimento ?? rawStore?.establishmentType;
+  const tipo_estabelecimento = ESTABLISHMENT_TYPES.includes(rawType)
+    ? rawType
+    : "mercado";
+  const rawConfigurableMenu = rawStore?.cardapio_configuravel_ativo
+    ?? rawStore?.cardapioConfiguravelAtivo
+    ?? rawStore?.configurableMenuEnabled;
+
+  return {
+    ...rawStore,
+    tipo_estabelecimento,
+    cardapio_configuravel_ativo: parseBoolean(rawConfigurableMenu, false),
+  };
+}
+
+function normalizeStoreResult(result: any) {
+  if (Array.isArray(result)) return result.map(normalizeStore);
+  if (Array.isArray(result?.data)) {
+    return {
+      ...result,
+      data: result.data.map(normalizeStore),
+    };
+  }
+  return normalizeStore(result);
+}
+
 export const storeService = {
   getAll: async (params?: { page?: number; limit?: number; search?: string; status?: string; nome?: string }): Promise<any> => {
     const response = await api.get("/lojas", { params });
-    return response.data?.data ?? response.data;
+    return normalizeStoreResult(unwrapApiData(response.data));
   },
   
   getById: async (id: string) => {
     const response = await api.get(`/lojas/${id}`);
-    return response.data?.data ?? response.data;
+    return normalizeStore(unwrapApiData(response.data));
   },
 
   create: async (data: StoreCreatePayload) => {
     const response = await api.post("/lojas", data);
-    return response.data?.data ?? response.data;
+    return normalizeStore(unwrapApiData(response.data));
   },
 
   update: async (id: string, data: StoreUpdatePayload) => {
     const response = await api.put(`/lojas/${id}`, data);
-    return response.data?.data ?? response.data;
+    return normalizeStore(unwrapApiData(response.data));
   },
 
   upsertColors: async (storeId: string, colors: StoreColorPayload) => {
     try {
       const configResponse = await api.get(`/lojas/${storeId}/configuracoes`);
-      const config = configResponse.data?.data ?? configResponse.data;
+      const config = unwrapApiData(configResponse.data);
 
       if (config?.id) {
         const response = await api.put(`/configuracoes_loja/${config.id}`, colors);
-        return response.data?.data ?? response.data;
+        return unwrapApiData(response.data);
       }
     } catch (error: any) {
       if (error?.response?.status !== 404) {
@@ -70,12 +116,12 @@ export const storeService = {
       loja_id: storeId,
       ...colors,
     });
-    return response.data?.data ?? response.data;
+    return unwrapApiData(response.data);
   },
 
   updateStatus: async (id: string, status: string) => {
     const response = await api.patch(`/lojas/${id}/status`, { status });
-    return response.data?.data ?? response.data;
+    return normalizeStore(unwrapApiData(response.data));
   },
 
   delete: async (id: string) => {

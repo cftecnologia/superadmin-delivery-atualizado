@@ -4,12 +4,16 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { storeService } from "../../features/stores/storeService";
+import { isAxiosError } from "axios";
+import {
+  storeService,
+  type StoreCreatePayload,
+} from "../../features/stores/storeService";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, UtensilsCrossed } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const DEFAULT_PRIMARY_COLOR = "#122a4c";
@@ -33,9 +37,25 @@ const storeSchema = z.object({
   longitude: z.number().min(-180, "Longitude inválida").max(180, "Longitude inválida").nullable().optional(),
   cor_primaria: colorSchema,
   cor_secundaria: colorSchema,
+  tipo_estabelecimento: z.enum(["mercado", "lanchonete", "restaurante", "hibrido", "outro"]),
+  cardapio_configuravel_ativo: z.boolean(),
 });
 
 type StoreFormValues = z.infer<typeof storeSchema>;
+type StoreApiError = {
+  error?: string | { message?: string };
+  message?: string;
+};
+
+const OPTIONAL_TEXT_FIELDS = [
+  "razao_social",
+  "telefone",
+  "email",
+  "descricao",
+  "logo_url",
+  "horario_abertura",
+  "horario_fechamento",
+] as const;
 
 export default function StoreForm() {
   const { id } = useParams<{ id: string }>();
@@ -54,10 +74,14 @@ export default function StoreForm() {
       longitude: null,
       cor_primaria: DEFAULT_PRIMARY_COLOR,
       cor_secundaria: DEFAULT_SECONDARY_COLOR,
+      tipo_estabelecimento: "mercado",
+      cardapio_configuravel_ativo: false,
     }
   });
   const primaryColorValue = watch("cor_primaria") || DEFAULT_PRIMARY_COLOR;
   const secondaryColorValue = watch("cor_secundaria") || DEFAULT_SECONDARY_COLOR;
+  const establishmentType = watch("tipo_estabelecimento");
+  const configurableMenuEnabled = watch("cardapio_configuravel_ativo");
 
   const { data: store, isLoading } = useQuery({
     queryKey: ["store", id],
@@ -84,6 +108,8 @@ export default function StoreForm() {
         longitude: store.longitude === null || store.longitude === undefined ? null : Number(store.longitude),
         cor_primaria: store.cor_primaria || DEFAULT_PRIMARY_COLOR,
         cor_secundaria: store.cor_secundaria || DEFAULT_SECONDARY_COLOR,
+        tipo_estabelecimento: store.tipo_estabelecimento || "mercado",
+        cardapio_configuravel_ativo: Boolean(store.cardapio_configuravel_ativo),
       });
     }
   }, [store, reset, isEditing]);
@@ -91,10 +117,13 @@ export default function StoreForm() {
   const mutation = useMutation({
     mutationFn: async (data: StoreFormValues) => {
       // Limpa campos vazios para enviar null ao backend
-      const payload: Record<string, any> = { ...data };
+      const payload: StoreCreatePayload = {
+        ...data,
+        tipo_estabelecimento: data.tipo_estabelecimento,
+        cardapio_configuravel_ativo: data.cardapio_configuravel_ativo === true,
+      };
 
-      const optionalFields = ["razao_social", "telefone", "email", "descricao", "logo_url", "horario_abertura", "horario_fechamento"];
-      for (const field of optionalFields) {
+      for (const field of OPTIONAL_TEXT_FIELDS) {
         if (payload[field] === "") {
           payload[field] = null;
         }
@@ -104,14 +133,23 @@ export default function StoreForm() {
         return storeService.update(id, payload);
       }
 
-      return storeService.create(payload as any);
+      return storeService.create(payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stores"] });
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: ["store", id] });
+      }
       navigate("/stores");
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.error?.message || err.response?.data?.error || err.response?.data?.message || "Erro ao salvar loja.";
+    onError: (err: unknown) => {
+      const responseData = isAxiosError<StoreApiError>(err) ? err.response?.data : undefined;
+      const responseError = responseData?.error;
+      const msg = (
+        typeof responseError === "string"
+          ? responseError
+          : responseError?.message
+      ) || responseData?.message || "Erro ao salvar loja.";
       setError(typeof msg === "string" ? msg : JSON.stringify(msg));
     }
   });
@@ -199,6 +237,65 @@ export default function StoreForm() {
                   <option value="inativa">Inativa</option>
                 </select>
               </div>
+
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-primary/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UtensilsCrossed className="h-5 w-5 text-primary" />
+              Tipo de estabelecimento e cardápio
+            </CardTitle>
+            <CardDescription>
+              Defina como a loja será apresentada e se poderá vender itens com tamanhos, sabores e adicionais.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="tipo_estabelecimento">Tipo de estabelecimento</Label>
+              <select
+                id="tipo_estabelecimento"
+                {...register("tipo_estabelecimento")}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <option value="mercado">Mercado</option>
+                <option value="lanchonete">Lanchonete</option>
+                <option value="restaurante">Restaurante</option>
+                <option value="hibrido">Híbrido</option>
+                <option value="outro">Outro</option>
+              </select>
+              {errors.tipo_estabelecimento && (
+                <span className="text-xs text-red-500">{errors.tipo_estabelecimento.message}</span>
+              )}
+              <p className="text-xs text-muted-foreground">
+                O tipo altera textos e padrões da experiência, mas não restringe produtos simples.
+              </p>
+            </div>
+
+            <label
+              htmlFor="cardapio_configuravel_ativo"
+              className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border bg-muted/20 p-4"
+            >
+              <span>
+                <span className="block text-sm font-semibold">Habilitar cardápio configurável</span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  Libera no admin do tenant o cadastro de tamanhos, sabores, adicionais e regras por variação.
+                </span>
+              </span>
+              <input
+                id="cardapio_configuravel_ativo"
+                type="checkbox"
+                {...register("cardapio_configuravel_ativo")}
+                className="h-5 w-5 shrink-0 accent-slate-900"
+              />
+            </label>
+
+            <div className="rounded-md bg-slate-100 px-3 py-2 text-sm dark:bg-slate-900">
+              Configuração atual: <strong className="capitalize">{establishmentType || "mercado"}</strong>
+              {" · "}
+              Cardápio configurável <strong>{configurableMenuEnabled ? "habilitado" : "desabilitado"}</strong>
             </div>
           </CardContent>
         </Card>

@@ -81,6 +81,7 @@ export default function StoresList() {
               <TableHead>Nome</TableHead>
               <TableHead>CNPJ</TableHead>
               <TableHead>Contato</TableHead>
+              <TableHead>Tipo</TableHead>
               <TableHead>Horário</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -89,19 +90,19 @@ export default function StoresList() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   Carregando lojas...
                 </TableCell>
               </TableRow>
             ) : error ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-red-500">
+                <TableCell colSpan={7} className="text-center py-8 text-red-500">
                   Erro ao carregar lojas.
                 </TableCell>
               </TableRow>
             ) : filteredStores.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   Nenhuma loja encontrada.
                 </TableCell>
               </TableRow>
@@ -121,6 +122,12 @@ export default function StoresList() {
                     <div className="flex flex-col">
                       <span className="text-sm">{store.email || "—"}</span>
                       <span className="text-xs text-muted-foreground">{store.telefone || "—"}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="text-sm capitalize">{store.tipo_estabelecimento || "mercado"}</span>
+                      {store.cardapio_configuravel_ativo && <Badge variant="outline">Cardápio ativo</Badge>}
                     </div>
                   </TableCell>
                   <TableCell>
