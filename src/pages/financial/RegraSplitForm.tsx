@@ -153,6 +153,7 @@ export default function RegraSplitForm() {
                 onChange={(e) => setFormData({ ...formData, gateway: e.target.value })}
               >
                 <option value="mercadopago">Mercado Pago</option>
+                <option value="pagarme">Stone (Pagar.me)</option>
               </select>
             </div>
 

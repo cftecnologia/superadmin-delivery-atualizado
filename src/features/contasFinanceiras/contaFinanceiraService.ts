@@ -14,7 +14,7 @@ export interface ContaFinanceira {
   digito?: string;
   tipo_conta?: 'corrente' | 'poupanca' | 'pagamento';
   chave_pix?: string;
-  gateway?: 'mercadopago' | 'nubank' | 'banco_manual' | 'outro';
+  gateway?: 'mercadopago' | 'pagarme' | 'nubank' | 'banco_manual' | 'outro';
   conta_gateway_id?: string;
   principal: boolean;
   ativa: boolean;

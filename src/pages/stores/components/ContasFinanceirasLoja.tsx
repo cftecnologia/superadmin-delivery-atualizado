@@ -31,7 +31,7 @@ const contaSchema = z.object({
   digito: z.string().optional(),
   tipo_conta: z.enum(["corrente", "poupanca", "pagamento"]).optional().or(z.literal("")),
   chave_pix: z.string().optional(),
-  gateway: z.enum(["mercadopago", "nubank", "banco_manual", "outro"]).optional().or(z.literal("")),
+  gateway: z.enum(["mercadopago", "pagarme", "nubank", "banco_manual", "outro"]).optional().or(z.literal("")),
   conta_gateway_id: z.string().optional(),
   principal: z.boolean(),
   ativa: z.boolean(),
@@ -209,6 +209,7 @@ export default function ContasFinanceirasLoja({ lojaId }: { lojaId: string }) {
                     className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     <option value="mercadopago">Mercado Pago</option>
+                    <option value="pagarme">Stone (Pagar.me)</option>
                     <option value="nubank">Nubank</option>
                     <option value="banco_manual">Banco Tradicional (Manual)</option>
                     <option value="outro">Outro / Carteira Digital</option>
