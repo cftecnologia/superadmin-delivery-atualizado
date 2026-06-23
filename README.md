@@ -37,17 +37,29 @@ src/
 npm install
 ```
 
-2. Crie um arquivo `.env` na raiz (se necessário), ou apenas confie no fallback para o localhost:
-```env
-VITE_API_URL=http://localhost:3010
+2. Crie o arquivo `.env` a partir do exemplo:
+```bash
+copy .env.example .env
 ```
 
-3. Inicie o servidor de desenvolvimento:
+3. Configure a URL do backend no `.env`:
+```env
+VITE_API_URL=http://localhost:3010/api
+```
+
+`VITE_API_URL` é a única variável de ambiente usada por este projeto. Ela deve
+conter a URL base da API, sempre com o sufixo `/api`. Para desenvolvimento local,
+consulte a variável `PORT` do `.env` do projeto `backend-node-with-AI` (o padrão
+atual é `3010`). Em produção, obtenha a URL pública do serviço do backend no
+provedor de hospedagem e acrescente `/api` ao final. Não adicione segredos em
+variáveis `VITE_`, pois elas são incorporadas ao código entregue ao navegador.
+
+4. Inicie o servidor de desenvolvimento:
 ```bash
 npm run dev
 ```
 
-4. Para gerar a build de produção:
+5. Para gerar a build de produção:
 ```bash
 npm run build
 ```
