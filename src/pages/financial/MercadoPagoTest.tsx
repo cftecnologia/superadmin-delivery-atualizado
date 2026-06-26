@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, CreditCard, Lock, RefreshCw, Settings, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CreditCard, Lock, RefreshCw, Settings, Users, X } from "lucide-react";
 import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react";
 import { mercadopagoService } from "../../features/financial/mercadopagoService";
 import type {
   MercadoPagoTestConfig,
+  MercadoPagoTestCustomer,
   MercadoPagoTestOrder,
   MercadoPagoTestPayment,
 } from "../../features/financial/mercadopagoService";
@@ -126,6 +127,13 @@ export const MercadoPagoTest = () => {
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [threeDsModalOpen, setThreeDsModalOpen] = useState(false);
+  const [customers, setCustomers] = useState<MercadoPagoTestCustomer[]>([]);
+  const [customersPaging, setCustomersPaging] = useState<{ total?: number; limit?: number; offset?: number } | null>(null);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [customersLoaded, setCustomersLoaded] = useState(false);
+  const [customerEmailFilter, setCustomerEmailFilter] = useState("");
+  const [customerEnvironment, setCustomerEnvironment] = useState<"production" | "sandbox">("production");
+  const [customersError, setCustomersError] = useState<string | null>(null);
   const [orderForm, setOrderForm] = useState({
     amount: "10.00",
     description: "Pedido sandbox Mercado Pago",
@@ -135,6 +143,9 @@ export const MercadoPagoTest = () => {
   });
 
   const isConfigured = Boolean(config?.configured.access_token && config?.configured.public_key && config.public_key);
+  const canLoadCustomers = customerEnvironment === "production"
+    ? Boolean(config?.configured.production_access_token)
+    : Boolean(config?.configured.access_token);
 
   const brickInitialization = useMemo(() => ({
     amount: order?.amount || 0,
@@ -185,6 +196,28 @@ export const MercadoPagoTest = () => {
       setError(getErrorMessage(requestError));
     } finally {
       setCreatingOrder(false);
+    }
+  };
+
+  const loadCustomers = async (nextOffset = 0) => {
+    setLoadingCustomers(true);
+    setCustomersError(null);
+
+    try {
+      const response = await mercadopagoService.getTestCustomers({
+        environment: customerEnvironment,
+        email: customerEmailFilter.trim() || undefined,
+        limit: 50,
+        offset: nextOffset,
+      });
+      setCustomers(response.results || []);
+      setCustomersPaging(response.paging || null);
+      setCustomersLoaded(true);
+    } catch (requestError) {
+      setCustomersError(getErrorMessage(requestError));
+      setCustomersLoaded(true);
+    } finally {
+      setLoadingCustomers(false);
     }
   };
 
@@ -296,11 +329,157 @@ export const MercadoPagoTest = () => {
                   {config?.credentials.public_key || "ausente"}
                 </span>
               </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">Access token producao</span>
+                <span className={config?.configured.production_access_token ? "text-emerald-700" : "text-red-700"}>
+                  {config?.configured.production_access_token ? "configurado" : "ausente"}
+                </span>
+              </div>
               {config?.warnings.map((warning) => (
                 <div key={warning} className="rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-800">
                   {warning}
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-lg">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Users className="h-4 w-4" />
+                Clientes Mercado Pago
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="mp-customer-environment">Ambiente</Label>
+                <select
+                  id="mp-customer-environment"
+                  value={customerEnvironment}
+                  onChange={(event) => {
+                    setCustomerEnvironment(event.target.value as "production" | "sandbox");
+                    setCustomers([]);
+                    setCustomersLoaded(false);
+                    setCustomersError(null);
+                    setCustomersPaging(null);
+                  }}
+                  className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="production">Producao - MP_ACCESS_TOKEN</option>
+                  <option value="sandbox">Sandbox - MP_TEST_ACCESS_TOKEN</option>
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="mp-customer-email">Filtrar por e-mail</Label>
+                <Input
+                  id="mp-customer-email"
+                  type="email"
+                  value={customerEmailFilter}
+                  placeholder="opcional"
+                  onChange={(event) => setCustomerEmailFilter(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void loadCustomers(0);
+                    }
+                  }}
+                />
+              </div>
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => void loadCustomers(0)}
+                disabled={!canLoadCustomers || loadingCustomers}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                {loadingCustomers ? "Carregando..." : "Ver clientes MP"}
+              </Button>
+
+              {!canLoadCustomers && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  {customerEnvironment === "production"
+                    ? "Configure MP_ACCESS_TOKEN no backend para ver clientes reais de producao."
+                    : "Configure MP_TEST_ACCESS_TOKEN no backend para ver clientes sandbox."}
+                </div>
+              )}
+
+              {customersError && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  {customersError}
+                </div>
+              )}
+
+              {customersLoaded && !customersError && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>
+                      {customers.length} cliente{customers.length === 1 ? "" : "s"} carregado{customers.length === 1 ? "" : "s"}
+                    </span>
+                    {typeof customersPaging?.total === "number" && (
+                      <span>Total MP: {customersPaging.total}</span>
+                    )}
+                  </div>
+
+                  {customers.length === 0 ? (
+                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                      Nenhum cliente retornado pelo Mercado Pago.
+                    </div>
+                  ) : (
+                    <div className="max-h-96 space-y-2 overflow-auto pr-1">
+                      {customers.map((customer, index) => (
+                        <div key={customer.id || customer.email || `mp-customer-${index}`} className="rounded-md border border-slate-200 p-3 text-sm">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-slate-900">
+                                {[customer.first_name, customer.last_name].filter(Boolean).join(" ") || customer.email || "Cliente sem nome"}
+                              </p>
+                              <p className="truncate text-xs text-slate-500">{customer.email || "E-mail nao informado"}</p>
+                            </div>
+                            <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 font-mono text-[10px] text-slate-600">
+                              {customer.id || "-"}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 grid gap-1 text-xs text-slate-500">
+                            <span>
+                              Documento: {customer.identification?.type || "-"} {customer.identification?.number_masked || ""}
+                            </span>
+                            <span>
+                              Criado: {customer.date_created ? new Date(customer.date_created).toLocaleString("pt-BR") : "-"}
+                            </span>
+                            <span>
+                              Cartoes no retorno: {customer.cards?.length || 0}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1"
+                      variant="outline"
+                      disabled={loadingCustomers || !customersPaging?.offset}
+                      onClick={() => void loadCustomers(Math.max(0, (customersPaging?.offset || 0) - (customersPaging?.limit || 50)))}
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      variant="outline"
+                      disabled={
+                        loadingCustomers ||
+                        typeof customersPaging?.total !== "number" ||
+                        (customersPaging?.offset || 0) + (customersPaging?.limit || 50) >= (customersPaging?.total || 0)
+                      }
+                      onClick={() => void loadCustomers((customersPaging?.offset || 0) + (customersPaging?.limit || 50))}
+                    >
+                      Proxima
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

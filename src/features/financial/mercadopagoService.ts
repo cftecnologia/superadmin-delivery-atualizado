@@ -18,6 +18,7 @@ export interface MercadoPagoTestConfig {
   configured: {
     access_token: boolean;
     public_key: boolean;
+    production_access_token?: boolean;
   };
   credentials: {
     access_token: string | null;
@@ -70,6 +71,45 @@ export interface MercadoPagoTestPayment {
   } | null;
 }
 
+export interface MercadoPagoTestCustomer {
+  id: string | null;
+  email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone: {
+    area_code: string | null;
+    number: string | null;
+  } | null;
+  identification: {
+    type: string | null;
+    number_masked: string | null;
+  } | null;
+  date_created: string | null;
+  date_last_updated: string | null;
+  date_registered: string | null;
+  cards: Array<{
+    id: string | null;
+    payment_method_id: string | null;
+    payment_type_id: string | null;
+    first_six_digits: string | null;
+    last_four_digits: string | null;
+    expiration_month: number | null;
+    expiration_year: number | null;
+    date_created: string | null;
+    date_last_updated: string | null;
+  }>;
+}
+
+export interface MercadoPagoTestCustomersResponse {
+  environment?: "production" | "sandbox";
+  paging: {
+    total?: number;
+    limit?: number;
+    offset?: number;
+  };
+  results: MercadoPagoTestCustomer[];
+}
+
 export interface CreateTestOrderData {
   amount: number;
   description: string;
@@ -120,5 +160,15 @@ export const mercadopagoService = {
   getTestPaymentStatus: async (paymentId: string): Promise<MercadoPagoTestPayment> => {
     const response = await api.get(`/mercadopago-test/payments/${paymentId}`);
     return response.data.data;
-  }
+  },
+
+  getTestCustomers: async (params?: {
+    environment?: "production" | "sandbox";
+    email?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<MercadoPagoTestCustomersResponse> => {
+    const response = await api.get("/mercadopago-test/customers", { params });
+    return response.data.data;
+  },
 };
