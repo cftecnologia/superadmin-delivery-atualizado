@@ -50,21 +50,21 @@ function StatCard({ title, value, icon: Icon, sub, color = "text-primary", trend
   help: string;
 }) {
   return (
-    <Card className="relative overflow-hidden group hover:shadow-lg transition-shadow duration-300">
+    <Card className="relative flex h-full min-h-[140px] flex-col overflow-hidden group hover:shadow-lg transition-shadow duration-300">
       <div className={`absolute inset-0 opacity-[0.03] ${color.replace("text-", "bg-")}`} />
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <div className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-800 ${color}`} title={help}>
+      <CardHeader className="relative flex min-h-[64px] flex-row items-start justify-between gap-3 space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium leading-5 text-muted-foreground">{title}</CardTitle>
+        <div className={`shrink-0 p-2 rounded-lg bg-slate-100 dark:bg-slate-800 ${color}`} title={help}>
           <Icon className="h-4 w-4" />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative flex flex-1 flex-col justify-end">
         <div className="text-2xl font-bold tracking-tight">{value}</div>
         {sub && (
-          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+          <p className="text-xs text-muted-foreground mt-1 flex items-start gap-1 leading-4">
             {trend === "up" && <ArrowUpRight className="h-3 w-3 text-emerald-500" />}
             {trend === "down" && <ArrowDownRight className="h-3 w-3 text-red-500" />}
-            {sub}
+            <span>{sub}</span>
           </p>
         )}
       </CardContent>
@@ -270,7 +270,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard title="Lojas Ativas" value={num(r.lojas_ativas)} icon={Store}
           sub={`${num(r.total_lojas)} total · ${num(r.lojas_inativas)} inativas`} color="text-indigo-500"
           help="Quantidade de lojas ativas no escopo selecionado." />
@@ -283,9 +283,6 @@ export default function Dashboard() {
         <StatCard title="Ticket Médio" value={fmt(ped.ticket_medio)} icon={TrendingUp}
           sub={`${num(ped.total_pedidos)} pedidos realizados`} color="text-violet-500"
           help="Valor médio dos pedidos no escopo selecionado." />
-      </div>
-
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard title="Pedidos Totais" value={num(ped.total_pedidos)} icon={ShoppingCart}
           sub={`${num(ped.pedidos_entregues)} entregues · ${num(ped.pedidos_cancelados)} cancelados`} color="text-blue-500"
           help="Total de pedidos criados ou realizados dentro dos filtros." />
@@ -358,7 +355,7 @@ export default function Dashboard() {
         </Card>
       )}
 
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard title="Pagamentos Aprovados" value={fmt(fin.pagamentos.valor_total_aprovado)} icon={CreditCard}
           sub={`${num(fin.pagamentos.pagamentos_aprovados)} de ${num(fin.pagamentos.total_pagamentos)}`} color="text-emerald-500" trend="up"
           help="Valor aprovado em pagamentos dentro do filtro atual." />
@@ -375,7 +372,7 @@ export default function Dashboard() {
           help="Valor líquido já transferido em splits de pagamento." />
       </div>
 
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MiniSummary icon={Truck} title="Entregas" color="text-teal-500" rows={[
           ["Total", num(m.entregas.total_entregas)],
           ["Aguardando", num(m.entregas.entregas_aguardando)],
