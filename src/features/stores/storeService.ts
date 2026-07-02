@@ -78,21 +78,44 @@ export interface DeliveryPaymentBillingReport {
   resumo: {
     quantidade_pedidos_clientes: number;
     quantidade_pedidos_manuais: number;
+    quantidade_pedidos_fiados?: number;
+    quantidade_pedidos_salao?: number;
     quantidade_pedidos_total: number;
     valor_bruto_clientes: number;
     valor_bruto_manuais: number;
+    valor_bruto_fiados?: number;
+    valor_bruto_salao?: number;
     valor_bruto_total: number;
     valor_final_cobranca: number;
+    categorias?: Array<{
+      categoria: string;
+      label: string;
+      quantidade_pedidos: number;
+      quantidade_cobrada: number;
+      valor_bruto: number;
+      valor_cobranca: number;
+    }>;
   };
   dias: Array<{
     data: string;
     quantidade_pedidos_clientes: number;
     quantidade_pedidos_manuais: number;
+    quantidade_pedidos_fiados?: number;
+    quantidade_pedidos_salao?: number;
     quantidade_pedidos_total: number;
     valor_bruto_clientes: number;
     valor_bruto_manuais: number;
     valor_bruto_total: number;
     valor_a_receber: number;
+    valor_a_receber_por_categoria?: Record<string, number>;
+  }>;
+  categorias?: Array<{
+    categoria: string;
+    label: string;
+    quantidade_pedidos: number;
+    quantidade_cobrada: number;
+    valor_bruto: number;
+    valor_cobranca: number;
   }>;
   pedidos: Array<{
     id: string;
@@ -102,8 +125,13 @@ export interface DeliveryPaymentBillingReport {
     status: string;
     origem_checkout?: string | null;
     origem_relatorio: "cliente" | "manual" | string;
+    categoria_cobranca?: string;
+    categoria_cobranca_label?: string;
     contabiliza_plataforma: boolean;
     tipo_pedido: string;
+    pedido_fiado?: boolean;
+    aplicado_taxa?: boolean;
+    valor_taxa_aplicada?: number;
     forma_pagamento: string;
     pagamento_status: string;
     pagamento_entrega_tipo: "dinheiro" | "cartao" | string;
