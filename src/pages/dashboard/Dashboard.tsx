@@ -457,7 +457,17 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => fmt(v)} stroke="hsl(var(--muted-foreground))" />
                 <YAxis type="category" dataKey="nome" width={140} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                <Tooltip formatter={(v) => fmt(v as number | string | undefined)} />
+                <Tooltip
+                  formatter={(v) => fmt(v as number | string | undefined)}
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--popover))",
+                    borderColor: "hsl(var(--border))",
+                    borderRadius: "var(--radius)",
+                    color: "hsl(var(--popover-foreground))",
+                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+                  }}
+                  labelStyle={{ color: "hsl(var(--popover-foreground))" }}
+                />
                 <Bar dataKey="faturamento" fill="#6366f1" radius={[0, 6, 6, 0]} name="Faturamento" />
               </BarChart>
             </ResponsiveContainer>
